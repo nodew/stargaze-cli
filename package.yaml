@@ -17,9 +17,12 @@ dependencies:
 - aeson
 - aeson-pretty
 - bytestring
-- req
+- hashable
+- hashmap
+- optparse-applicative
 - path
 - path-io
+- req
 - text
 - time
 

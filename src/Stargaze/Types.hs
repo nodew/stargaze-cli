@@ -3,10 +3,9 @@
 
 module Stargaze.Types where
 
+import Control.Monad ( MonadPlus(mzero) )
 import Data.Time ( UTCTime )
 import Data.Int (Int64, Int32)
-import Control.Monad ( MonadPlus(mzero) )
-import GHC.Generics (Generic)
 import Data.Aeson.Types (camelTo)
 import Data.Aeson
     ( (.:),
@@ -19,6 +18,10 @@ import Data.Aeson
       Value(Object),
       KeyValue((.=)),
       ToJSON(toJSON), genericToJSON )
+import Data.HashMap ( Map )
+import qualified Data.HashMap as HashMap
+import Data.Hashable (Hashable (hashWithSalt))
+import GHC.Generics (Generic)
 
 data Config = Config
     { cfgUser      :: String

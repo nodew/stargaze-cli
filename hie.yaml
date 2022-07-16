@@ -3,6 +3,6 @@ cradle:
     - path: "./src"
       component: "stargaze-cli:lib"
     - path: "./app"
-      component: "stargaze-cli:exe:stargaze-cli-exe"
+      component: "stargaze-cli:exe:stargaze"
     - path: "./test"
       component: "stargaze-cli:test:stargaze-cli-test"

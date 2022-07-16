@@ -4,7 +4,10 @@
 module Stargaze.CLI
 ( loadConfig
 , writeConfig
-, loadAllProjects
+, updateLocalProjects
+, loadLocalProjects
+, showTopTags
+, showTopOwners
 ) where
 
 import Network.HTTP.Req
@@ -31,8 +34,18 @@ import Path
 import Path.IO
     ( createDir, doesDirExist, doesFileExist, getHomeDir )
 import System.Exit (exitFailure, exitSuccess)
+import Data.Time (getCurrentTime)
+import Data.Maybe (isJust)
+import Data.List ( sortBy )
+import Data.HashMap (toList, (!))
+import Data.Bifunctor ( Bifunctor(second) )
+import Control.Monad (forM_)
 
-import Stargaze.Types ( Project, Config(cfgUser) )
+import Stargaze.Types ( Project, Config(cfgUser, Config, cfgUpdatedAt), Author (authorLogin) )
+import Stargaze.Aggregate
+    ( aggregate,
+      MergeMap(getMergeMap),
+      ProjectAgg(aggByTag, aggAuthor, aggByOwner) )
 
 {- Maximum allowed page size -}
 pageSize :: Int
@@ -61,24 +74,31 @@ writeConfig cfg = do
     let content = encodePretty cfg
     B.writeFile (toFilePath configFilePath) content
 
-loadAllProjects :: IO ()
-loadAllProjects = do
+updateLocalProjects :: IO ()
+updateLocalProjects = do
     config <- loadConfig
     case config of
         Left err -> putStrLn err
-        Right config -> loadAllProjectsOfUser $ cfgUser config
+        Right config -> do
+            if isJust (cfgUpdatedAt config) then do
+                putStrLn $ "Last updated at " ++ show (cfgUpdatedAt config)
+                loadAllProjects $ cfgUser config
+            else
+                loadAllProjects $ cfgUser config
 
-loadAllProjectsOfUser :: String -> IO ()
-loadAllProjectsOfUser user = do
+loadAllProjects :: String -> IO ()
+loadAllProjects user = do
     projects <- loadAllProjects' user 1
     saveProjectsToLocal projects
+    time <- getCurrentTime
+    writeConfig $ Config user (Just time)
     putStrLn "Data load completed"
 
 loadAllProjects' :: String -> Int -> IO [Project]
 loadAllProjects' user page = do
     projects <- loadPagedProjects user page
     if length projects < pageSize then do -- Last page
-        putStrLn $ " Loaded" ++ show (page * pageSize + length projects) ++ " projects"
+        putStrLn $ "Loaded " ++ show (page * pageSize + length projects) ++ " projects"
         return projects
     else do
         putStrLn $ "Loaded " ++ show (page * pageSize) ++ " projects"
@@ -111,6 +131,27 @@ loadLocalProjects = do
         case decode content of
             Just projects -> return $ Right projects
             _ -> return $ Left "Run \"stargaze update\" first"
+
+showTopTags :: Int -> [Project] -> IO ()
+showTopTags n projects = do
+    let agg = aggregate projects
+    let tags = getMergeMap $ aggByTag agg
+    let tagCounts = map (second length) (toList tags)
+    let sortedTags = sortBy (\ (_, a) (_, b) -> compare b a) tagCounts
+    let headTags = take n sortedTags
+    forM_ headTags $ \(tag, count) -> putStrLn $ tag ++ " (" ++ show count ++ ")"
+
+showTopOwners :: Int -> [Project] -> IO ()
+showTopOwners n projects = do
+    let agg = aggregate projects
+    let authors = aggAuthor agg
+    let owners = getMergeMap $ aggByOwner agg
+    let ownerCounts = map (second length) (toList owners)
+    let sortedOwners = sortBy (\ (_, a) (_, b) -> compare b a) ownerCounts
+    let headOwners = take n sortedOwners
+    forM_ headOwners $ \(authorId, count) -> do
+        let author = authors ! authorId
+        putStrLn $ authorLogin author ++ " (" ++ show count ++ ")"
 
 getConfigFilePath :: IO (Path Abs File)
 getConfigFilePath = do
