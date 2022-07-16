@@ -1,1 +1,1 @@
-# github-star-atlas-cli
+# stargaze-cli

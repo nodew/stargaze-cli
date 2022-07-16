@@ -1,3 +1,3 @@
-# Changelog for github-star-atlas-cli
+# Changelog for stargaze-cli
 
 ## Unreleased changes

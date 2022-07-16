@@ -1,6 +1,6 @@
-name:                github-star-atlas-cli
+name:                stargaze-cli
 version:             0.1.0.0
-github:              "nodew/github-star-atlas-cli"
+github:              "nodew/stargaze-cli"
 license:             BSD3
 author:              "Qiao Wang"
 maintainer:          "wangqiao11@hotmail.com"
@@ -10,28 +10,24 @@ extra-source-files:
 - README.md
 - ChangeLog.md
 
-# Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
-
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/nodew/github-star-atlas-cli#readme>
+description:         Please see the README on GitHub at <https://github.com/nodew/stargaze-cli#readme>
 
 dependencies:
 - base >= 4.7 && < 5
-- time
 - aeson
-- text
+- aeson-pretty
 - bytestring
 - req
+- path
+- path-io
+- text
+- time
 
 library:
   source-dirs: src
 
 executables:
-  github-star-atlas-cli-exe:
+  stargaze:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -39,10 +35,10 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - github-star-atlas-cli
+    - stargaze-cli
 
 tests:
-  github-star-atlas-cli-test:
+  stargaze-cli-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -50,4 +46,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - github-star-atlas-cli
+    - stargaze-cli

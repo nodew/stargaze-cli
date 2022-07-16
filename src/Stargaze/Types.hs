@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Types where
+module Stargaze.Types where
 
 import Data.Time ( UTCTime )
 import Data.Int (Int64, Int32)
@@ -18,23 +18,23 @@ import Data.Aeson
       Options(fieldLabelModifier),
       Value(Object),
       KeyValue((.=)),
-      ToJSON(toJSON) )
+      ToJSON(toJSON), genericToJSON )
 
 data Config = Config
     { cfgUser      :: String
-    , cfgUpdatedAt :: UTCTime
+    , cfgUpdatedAt :: Maybe UTCTime
     } deriving (Show)
 
 instance FromJSON Config where
     parseJSON (Object o) =
         Config <$> o .: "user"
-               <*> o .: "updatedAt"
+               <*> o .: "updated_at"
     parseJSON _ = mzero
 
 instance ToJSON Config where
     toJSON cfg = object
-        [ "user"      .= toJSON (cfgUser cfg)
-        , "updatedAt"      .= toJSON (cfgUpdatedAt cfg)
+        [ "user"       .= toJSON (cfgUser cfg)
+        , "updated_at" .= toJSON (cfgUpdatedAt cfg)
         ]
 
 data Project = Project
@@ -58,6 +58,11 @@ instance FromJSON Project where
         defaultOptions
             { fieldLabelModifier = camelTo2 '_' . drop 7 }
 
+instance ToJSON Project where
+    toJSON = genericToJSON
+        defaultOptions
+            { fieldLabelModifier = camelTo2 '_' . drop 7 }
+
 data Author = Author
     { authorLogin     :: String
     , authorId        :: Int64
@@ -68,5 +73,10 @@ data Author = Author
 
 instance FromJSON Author where
     parseJSON = genericParseJSON
+        defaultOptions
+            { fieldLabelModifier = camelTo2 '_' . drop 6 }
+
+instance ToJSON Author where
+    toJSON = genericToJSON
         defaultOptions
             { fieldLabelModifier = camelTo2 '_' . drop 6 }
