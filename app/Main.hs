@@ -1,7 +1,7 @@
 module Main where
 
 
-import CLI (loadProjects)
+import Stargaze.CLI (loadAllProjects)
 
 main :: IO ()
-main = loadProjects
+main = loadAllProjects "nodew"

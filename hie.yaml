@@ -1,8 +1,8 @@
 cradle:
   stack:
     - path: "./src"
-      component: "github-star-atlas-cli:lib"
+      component: "stargaze-cli:lib"
     - path: "./app"
-      component: "github-star-atlas-cli:exe:github-star-atlas-cli-exe"
+      component: "stargaze-cli:exe:stargaze-cli-exe"
     - path: "./test"
-      component: "github-star-atlas-cli:test:github-star-atlas-cli-test"
+      component: "stargaze-cli:test:stargaze-cli-test"
