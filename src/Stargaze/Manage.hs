@@ -14,7 +14,6 @@ module Stargaze.Manage
 where
 
 import Control.Monad (forM_)
-import qualified Control.Monad as T
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson (decode)
 import Data.Aeson.Encode.Pretty (encodePretty)
@@ -25,6 +24,7 @@ import Data.HashMap (toList, (!))
 import Data.List (isInfixOf, sortBy)
 import Data.Maybe (isJust)
 import qualified Data.Text as T
+import qualified Data.Text.Lazy.IO as T
 import Data.Time (getCurrentTime)
 import Network.HTTP.Req
   ( GET (GET),
@@ -60,9 +60,10 @@ import Stargaze.Aggregate
     ProjectAgg (aggAuthor, aggByLang, aggByOwner, aggByTag),
     aggregate,
   )
-import Stargaze.Types (Author (authorLogin), Config (Config, cfgUpdatedAt, cfgUser), Project (projectHtmlUrl, projectLanguage, projectName, projectOwner, projectTopics), ProjectFilter (pfLanguage, pfPattern, pfTag))
+import Stargaze.Types (Author (authorLogin, authorHtmlUrl), Config (Config, cfgUpdatedAt, cfgUser), Project (projectHtmlUrl, projectLanguage, projectName, projectOwner, projectTopics), ProjectFilter (pfLanguage, pfPattern, pfTag))
 import System.Exit (exitFailure, exitSuccess)
 import Data.Char (toLower)
+import Formatting
 
 {- Maximum allowed page size -}
 pageSize :: Int
@@ -160,7 +161,8 @@ showTopTags n projects = do
   let tagCounts = map (second length) (toList tags)
   let sortedTags = sortBy (\(_, a) (_, b) -> compare b a) tagCounts
   let headTags = take n sortedTags
-  forM_ headTags $ \(tag, count) -> putStrLn $ tag ++ " (" ++ show count ++ ")"
+  forM_ headTags $ \(tag, count) ->
+    T.putStrLn $ format (string % " (" % int % ")") tag count
 
 showTopLanguages :: Int -> [Project] -> IO ()
 showTopLanguages n projects = do
@@ -169,7 +171,8 @@ showTopLanguages n projects = do
   let langCounts = map (second length) (toList languages)
   let sortedLanguages = sortBy (\(_, a) (_, b) -> compare b a) langCounts
   let topLanguages = take n sortedLanguages
-  forM_ topLanguages $ \(lang, count) -> putStrLn $ lang ++ " (" ++ show count ++ ")"
+  forM_ topLanguages $ \(lang, count) ->
+    T.putStrLn $ format (string % " (" % int % ")") lang count
 
 showTopOwners :: Int -> [Project] -> IO ()
 showTopOwners n projects = do
@@ -181,14 +184,14 @@ showTopOwners n projects = do
   let headOwners = take n sortedOwners
   forM_ headOwners $ \(authorId, count) -> do
     let author = authors ! authorId
-    putStrLn $ authorLogin author ++ " (" ++ show count ++ ")"
+    T.putStrLn $ format ((right 20 ' ' %. (string % " (" % int % ")")) % " " % string) (authorLogin author) count (authorHtmlUrl author)
 
 listProjects :: ProjectFilter -> Int -> [Project] -> IO ()
 listProjects pf n projects = do
   let projects' = filter matchFilter projects
   let headProjects = take n projects'
   forM_ headProjects $ \project -> do
-    putStrLn $ (authorLogin . projectOwner) project ++ "/" ++ projectName project ++ " " ++ projectHtmlUrl project
+    T.putStrLn $ format ((right 40 ' ' %. (string % "/" % string)) % " " % string) (authorLogin $ projectOwner project) (projectName project) (projectHtmlUrl project)
   where
     matchLanguage project = case pfLanguage pf of
       Just lang -> case projectLanguage project of

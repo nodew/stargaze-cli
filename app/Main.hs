@@ -56,6 +56,4 @@ exec ListLang =
 exec (ListProject pf) =
   loadLocalProjects >>= \case
     Left err -> putStrLn err
-    Right projects -> do
-      print pf
-      listProjects pf 20 projects
+    Right projects -> listProjects pf 20 projects
