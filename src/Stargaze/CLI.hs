@@ -8,6 +8,8 @@ module Stargaze.CLI
 , loadLocalProjects
 , showTopTags
 , showTopOwners
+, showTopLanguages
+, listProjects
 ) where
 
 import Network.HTTP.Req
@@ -36,16 +38,16 @@ import Path.IO
 import System.Exit (exitFailure, exitSuccess)
 import Data.Time (getCurrentTime)
 import Data.Maybe (isJust)
-import Data.List ( sortBy )
+import Data.List ( sortBy, isInfixOf )
 import Data.HashMap (toList, (!))
 import Data.Bifunctor ( Bifunctor(second) )
 import Control.Monad (forM_)
 
-import Stargaze.Types ( Project, Config(cfgUser, Config, cfgUpdatedAt), Author (authorLogin) )
+import Stargaze.Types ( Project (projectLanguage, projectTopics, projectName, projectOwner, projectHtmlUrl), Config(cfgUser, Config, cfgUpdatedAt), Author (authorLogin), ProjectFilter (pfLanguage, pfTag, pfPattern) )
 import Stargaze.Aggregate
     ( aggregate,
       MergeMap(getMergeMap),
-      ProjectAgg(aggByTag, aggAuthor, aggByOwner) )
+      ProjectAgg(aggByTag, aggAuthor, aggByOwner, aggByLang) )
 
 {- Maximum allowed page size -}
 pageSize :: Int
@@ -141,6 +143,15 @@ showTopTags n projects = do
     let headTags = take n sortedTags
     forM_ headTags $ \(tag, count) -> putStrLn $ tag ++ " (" ++ show count ++ ")"
 
+showTopLanguages :: Int -> [Project] -> IO ()
+showTopLanguages n projects = do
+    let agg = aggregate projects
+    let languages = getMergeMap $ aggByLang agg
+    let langCounts = map (second length) (toList languages)
+    let sortedLanguages = sortBy (\ (_, a) (_, b) -> compare b a) langCounts
+    let topLanguages = take n sortedLanguages
+    forM_ topLanguages $ \(lang, count) -> putStrLn $ lang ++ " (" ++ show count ++ ")"
+
 showTopOwners :: Int -> [Project] -> IO ()
 showTopOwners n projects = do
     let agg = aggregate projects
@@ -152,6 +163,26 @@ showTopOwners n projects = do
     forM_ headOwners $ \(authorId, count) -> do
         let author = authors ! authorId
         putStrLn $ authorLogin author ++ " (" ++ show count ++ ")"
+
+listProjects :: ProjectFilter -> Int -> [Project] -> IO ()
+listProjects pf n projects = do
+    let projects' = filter matchFilter projects
+    let headProjects = take n projects'
+    forM_ headProjects $ \project -> do
+        putStrLn $ (authorLogin . projectOwner) project ++ "/" ++ projectName project ++ " " ++ projectHtmlUrl project
+    where
+        matchLanguage project = case pfLanguage pf of
+            Just lang -> case projectLanguage project of
+                            Just lang' -> lang == lang'
+                            _          -> False
+            _         -> True
+        matchTopic project = case pfTag pf of
+            Just tag -> tag `elem` projectTopics project
+            _         -> True
+        matchPattern project = case pfPattern pf of
+            Just pattern -> pattern `isInfixOf` projectName project
+            _         -> True
+        matchFilter project = matchLanguage project && matchTopic project && matchPattern project
 
 getConfigFilePath :: IO (Path Abs File)
 getConfigFilePath = do

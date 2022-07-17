@@ -14,14 +14,16 @@ import Options.Applicative
 import Stargaze.Types ( Config(Config, cfgUser) )
 import Stargaze.Command
     ( parseCommand,
-      Command(ListOwners, SetConfig, UpdateProjects, ListTags) )
+      Command(ListOwners, SetConfig, UpdateProjects, ListTags, ListLang, ListProject) )
 import Stargaze.CLI
     ( loadConfig,
       loadLocalProjects,
       showTopOwners,
       showTopTags,
       updateLocalProjects,
-      writeConfig )
+      writeConfig,
+      showTopLanguages,
+      listProjects )
 
 main :: IO ()
 main = do
@@ -47,4 +49,14 @@ exec ListOwners = loadLocalProjects >>= \case
     Left err -> putStrLn err
     Right projects -> showTopOwners 20 projects
 
-exec _ = putStrLn "Not implement yet"
+exec ListLang = loadLocalProjects >>= \case
+    Left err -> putStrLn err
+    Right projects -> showTopLanguages 20 projects
+
+exec (ListProject pf) = loadLocalProjects >>= \case
+    Left err -> putStrLn err
+    Right projects -> do
+        print pf
+        listProjects pf 20 projects
+
+-- exec _ = putStrLn "Not implement yet"
