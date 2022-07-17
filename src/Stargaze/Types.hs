@@ -47,6 +47,7 @@ data Project = Project
     , projectFullName         :: String
     , projectDescription      :: Maybe String
     , projectOwner            :: Author
+    , projectLanguage         :: Maybe String
     , projectHtmlUrl          :: String
     , projectSshUrl           :: String
     , projectCloneUrl         :: String
@@ -83,3 +84,9 @@ instance ToJSON Author where
     toJSON = genericToJSON
         defaultOptions
             { fieldLabelModifier = camelTo2 '_' . drop 6 }
+
+data ProjectFilter = ProjectFilter
+    { pfPattern :: Maybe String
+    , pfLanguage :: Maybe String
+    , pfTag :: Maybe String
+    } deriving (Eq, Show)

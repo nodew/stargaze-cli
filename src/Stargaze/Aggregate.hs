@@ -7,12 +7,13 @@ module Stargaze.Aggregate
 import Data.HashMap ( Map )
 import Data.Hashable ( Hashable )
 import qualified Data.HashMap as HashMap
-import Stargaze.Types ( Author (authorId), Project (projectOwner, projectTopics) )
+import Stargaze.Types ( Author (authorId), Project (projectOwner, projectTopics, projectLanguage) )
 import qualified Data.Aeson.KeyMap as HasMap
 import Data.Int ( Int64 )
 import Data.String (IsString(fromString))
 import Data.Foldable (foldl')
 import Data.Function (on)
+import Data.Maybe (fromMaybe)
 
 newtype MergeMap k v = MergeMap { getMergeMap :: Map k v } deriving (Show)
 
@@ -25,6 +26,7 @@ instance (Semigroup v, Eq k, Hashable k, Ord k) => Monoid (MergeMap k v) where
 
 data ProjectAgg = ProjectAgg
     { aggByTag   :: MergeMap String [Project]
+    , aggByLang  :: MergeMap String [Project]
     , aggByOwner :: MergeMap Int64 [Project]
     , aggAuthor  :: Map Int64 Author
     } deriving (Show)
@@ -33,18 +35,20 @@ instance Semigroup ProjectAgg where
   x <> y =
     ProjectAgg
         { aggByTag = on (<>) aggByTag x y
+        , aggByLang = on (<>) aggByLang x y
         , aggByOwner = on (<>) aggByOwner x y
         , aggAuthor = on (<>) aggAuthor x y
         }
 
 instance Monoid ProjectAgg where
   mappend = (<>)
-  mempty = ProjectAgg mempty mempty mempty
+  mempty = ProjectAgg mempty mempty mempty mempty
 
 singletonAggregate :: Project -> ProjectAgg
 singletonAggregate project =
     ProjectAgg
         { aggByTag = foldl' (<>) mempty _singletonTags
+        , aggByLang = MergeMap $ HashMap.singleton _language [project]
         , aggByOwner = MergeMap $ HashMap.singleton _ownerId [project]
         , aggAuthor = HashMap.singleton _ownerId _owner
         }
@@ -52,6 +56,7 @@ singletonAggregate project =
         _owner = projectOwner project
         _ownerId = authorId _owner
         _tags = projectTopics project
+        _language = fromMaybe "Unknown" $ projectLanguage project
         _singletonTags = map (\tag -> MergeMap $ HashMap.singleton tag [project]) _tags
 
 aggregate :: [Project] -> ProjectAgg
