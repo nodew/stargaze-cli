@@ -24,9 +24,10 @@ import Data.Hashable (Hashable (hashWithSalt))
 import Data.Int (Int32, Int64)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
+import Data.Text (Text)
 
 data Config = Config
-  { cfgUser :: String,
+  { cfgUser :: Text,
     cfgUpdatedAt :: Maybe UTCTime
   }
   deriving (Show)
@@ -46,16 +47,16 @@ instance ToJSON Config where
 
 data Project = Project
   { projectId :: Int64,
-    projectNodeId :: String,
-    projectName :: String,
-    projectFullName :: String,
-    projectDescription :: Maybe String,
+    projectNodeId :: Text,
+    projectName :: Text,
+    projectFullName :: Text,
+    projectDescription :: Maybe Text,
     projectOwner :: Author,
-    projectLanguage :: Maybe String,
-    projectHtmlUrl :: String,
-    projectSshUrl :: String,
-    projectCloneUrl :: String,
-    projectTopics :: [String],
+    projectLanguage :: Maybe Text,
+    projectHtmlUrl :: Text,
+    projectSshUrl :: Text,
+    projectCloneUrl :: Text,
+    projectTopics :: [Text],
     projectForksCount :: Int32,
     projectWatchersCount :: Int32,
     projectStargazersCount :: Int32
@@ -77,11 +78,11 @@ instance ToJSON Project where
         }
 
 data Author = Author
-  { authorLogin :: String,
+  { authorLogin :: Text,
     authorId :: Int64,
-    authorNodeId :: String,
-    authorAvatarUrl :: String,
-    authorHtmlUrl :: String
+    authorNodeId :: Text,
+    authorAvatarUrl :: Text,
+    authorHtmlUrl :: Text
   }
   deriving (Show, Eq, Generic)
 
@@ -100,9 +101,9 @@ instance ToJSON Author where
         }
 
 data ProjectFilter = ProjectFilter
-  { pfPattern :: Maybe String,
-    pfLanguage :: Maybe String,
-    pfTag :: Maybe String,
-    pfOwner :: Maybe String
+  { pfPattern :: Maybe Text,
+    pfLanguage :: Maybe Text,
+    pfTag :: Maybe Text,
+    pfOwner :: Maybe Text
   }
   deriving (Eq, Show)
