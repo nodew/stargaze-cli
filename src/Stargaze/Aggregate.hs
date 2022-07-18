@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Stargaze.Aggregate
   ( aggregate,
     MergeMap (..),
@@ -15,6 +17,7 @@ import Data.Int (Int64)
 import Data.Maybe (fromMaybe)
 import Data.String (IsString (fromString))
 import Stargaze.Types (Author (authorId), Project (projectLanguage, projectOwner, projectTopics))
+import Data.Text (Text)
 
 newtype MergeMap k v = MergeMap {getMergeMap :: Map k v} deriving (Show)
 
@@ -26,8 +29,8 @@ instance (Semigroup v, Eq k, Hashable k, Ord k) => Monoid (MergeMap k v) where
   mappend = (<>)
 
 data ProjectAgg = ProjectAgg
-  { aggByTag :: MergeMap String [Project],
-    aggByLang :: MergeMap String [Project],
+  { aggByTag :: MergeMap Text [Project],
+    aggByLang :: MergeMap Text [Project],
     aggByOwner :: MergeMap Int64 [Project],
     aggAuthor :: Map Int64 Author
   }

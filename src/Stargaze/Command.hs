@@ -1,6 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 module Stargaze.Command where
 
+import Data.Text (Text)
+import qualified Data.Text.IO as T
 import Options.Applicative
   ( Parser,
     ParserInfo,
@@ -33,7 +36,7 @@ import Stargaze.Manage
       listProjects )
 
 data Command
-  = SetConfig {user :: String}
+  = SetConfig {user :: Text}
   | UpdateProjects
   | ListProjects ProjectFilter Int
   | ListOwners Int
@@ -44,10 +47,10 @@ data Command
 withInfo :: Parser a -> String -> ParserInfo a
 withInfo opts desc = info (helper <*> opts) $ progDesc desc
 
-parseUsername :: Parser String
+parseUsername :: Parser Text
 parseUsername = strOption $ long "user" <> metavar "[GITHUB USERNAME]" <> help "Config your github username"
 
-parseSearchPattern :: Parser String
+parseSearchPattern :: Parser Text
 parseSearchPattern =
   strOption $
     long "pattern"
@@ -55,7 +58,7 @@ parseSearchPattern =
       <> metavar "[PATTERN]"
       <> help "Search pattern"
 
-parseLangOption :: Parser String
+parseLangOption :: Parser Text
 parseLangOption =
   strOption $
     long "lang"
@@ -63,7 +66,7 @@ parseLangOption =
       <> metavar "[LANGUAGE]"
       <> help "Filter by language"
 
-parseTagOption :: Parser String
+parseTagOption :: Parser Text
 parseTagOption =
   strOption $
     long "tag"
@@ -71,7 +74,7 @@ parseTagOption =
       <> metavar "[TAG]"
       <> help "Filter by tag"
 
-parseOwnerOption :: Parser String
+parseOwnerOption :: Parser Text
 parseOwnerOption =
   strOption $
     long "owner"
@@ -86,7 +89,7 @@ parseTopOption = option auto $
       <> value 20
       <> help "Return top N results"
 
-strToMaybe :: String -> Maybe String
+strToMaybe :: Text -> Maybe Text
 strToMaybe "" = Nothing
 strToMaybe x = Just x
 
@@ -131,17 +134,17 @@ execCommand (SetConfig user) =
 execCommand UpdateProjects = updateLocalProjects
 execCommand (ListTags n) =
   loadLocalProjects >>= \case
-    Left err -> putStrLn err
+    Left err -> T.putStrLn err
     Right projects -> showTopTags n projects
 execCommand (ListOwners n) =
   loadLocalProjects >>= \case
-    Left err -> putStrLn err
+    Left err -> T.putStrLn err
     Right projects -> showTopOwners n projects
 execCommand (ListLang n) =
   loadLocalProjects >>= \case
-    Left err -> putStrLn err
+    Left err -> T.putStrLn err
     Right projects -> showTopLanguages n projects
 execCommand (ListProjects pf n) =
   loadLocalProjects >>= \case
-    Left err -> putStrLn err
+    Left err -> T.putStrLn err
     Right projects -> listProjects pf n projects
