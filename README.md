@@ -2,7 +2,7 @@
 
 Stargaze is a CLI tool to help you manage your starred projects on GitHub.
 
-## Build && Install
+## Build & Install
 
 ```bash
 $ git clone https://github.com/nodew/stargaze-cli.git
