@@ -60,7 +60,7 @@ import Stargaze.Aggregate
     ProjectAgg (aggAuthor, aggByLang, aggByOwner, aggByTag),
     aggregate,
   )
-import Stargaze.Types (Author (authorLogin, authorHtmlUrl), Config (Config, cfgUpdatedAt, cfgUser), Project (projectHtmlUrl, projectLanguage, projectName, projectOwner, projectTopics), ProjectFilter (pfLanguage, pfPattern, pfTag))
+import Stargaze.Types (Author (authorLogin, authorHtmlUrl), Config (Config, cfgUpdatedAt, cfgUser), Project (projectHtmlUrl, projectLanguage, projectName, projectOwner, projectTopics), ProjectFilter (pfLanguage, pfPattern, pfTag, pfOwner))
 import System.Exit (exitFailure, exitSuccess)
 import Data.Char (toLower)
 import Formatting
@@ -201,10 +201,13 @@ listProjects pf n projects = do
     matchTopic project = case pfTag pf of
       Just tag -> map toLower tag `elem` map (map toLower) (projectTopics project)
       _ -> True
+    matchOnwer project = case pfOwner pf of
+      Just owner -> map toLower owner `isInfixOf` (map toLower . authorLogin . projectOwner) project
+      _ -> True
     matchPattern project = case pfPattern pf of
       Just pattern -> map toLower pattern `isInfixOf` (map toLower . projectName) project
       _ -> True
-    matchFilter project = matchLanguage project && matchTopic project && matchPattern project
+    matchFilter project = all (\match -> match project) [matchLanguage, matchTopic, matchOnwer, matchPattern]
 
 getConfigFilePath :: IO (Path Abs File)
 getConfigFilePath = do

@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module Stargaze.Command where
 
 import Options.Applicative
@@ -19,15 +20,25 @@ import Options.Applicative
     subparser,
     value,
   )
-import Stargaze.Types (Config, ProjectFilter (ProjectFilter))
+
+import Stargaze.Types (Config (cfgUser, Config), ProjectFilter (ProjectFilter))
+import Stargaze.Manage
+    ( loadConfig,
+      writeConfig,
+      updateLocalProjects,
+      loadLocalProjects,
+      showTopTags,
+      showTopLanguages,
+      showTopOwners,
+      listProjects )
 
 data Command
   = SetConfig {user :: String}
   | UpdateProjects
-  | ListProject ProjectFilter
-  | ListOwners
-  | ListTags
-  | ListLang
+  | ListProjects ProjectFilter Int
+  | ListOwners Int
+  | ListTags Int
+  | ListLang Int
   deriving (Eq, Show)
 
 withInfo :: Parser a -> String -> ParserInfo a
@@ -44,21 +55,36 @@ parseSearchPattern =
       <> metavar "[PATTERN]"
       <> help "Search pattern"
 
-parseSearchLang :: Parser String
-parseSearchLang =
+parseLangOption :: Parser String
+parseLangOption =
   strOption $
     long "lang"
       <> short 'l'
       <> metavar "[LANGUAGE]"
       <> help "Filter by language"
 
-parseSearchTag :: Parser String
-parseSearchTag =
+parseTagOption :: Parser String
+parseTagOption =
   strOption $
     long "tag"
       <> short 't'
       <> metavar "[TAG]"
       <> help "Filter by tag"
+
+parseOwnerOption :: Parser String
+parseOwnerOption =
+  strOption $
+    long "owner"
+      <> short 'o'
+      <> metavar "[OWNER]"
+      <> help "Filter by owner"
+
+parseTopOption :: Parser Int
+parseTopOption = option auto $
+    long "top"
+      <> metavar "[N = 20]"
+      <> value 20
+      <> help "Return top N results"
 
 strToMaybe :: String -> Maybe String
 strToMaybe "" = Nothing
@@ -67,21 +93,55 @@ strToMaybe x = Just x
 parseSetConfig :: Parser Command
 parseSetConfig = SetConfig <$> parseUsername
 
-parseSearch :: Parser Command
-parseSearch =
-  fmap ListProject $
-    ProjectFilter
+parseListProjects :: Parser Command
+parseListProjects =
+  ListProjects <$>
+    (ProjectFilter
       <$> optional parseSearchPattern
-      <*> optional parseSearchLang
-      <*> optional parseSearchTag
+      <*> optional parseLangOption
+      <*> optional parseTagOption
+      <*> optional parseOwnerOption)
+    <*> parseTopOption
+
+parseListTags :: Parser Command
+parseListTags = ListTags <$> parseTopOption
+
+parseListLang :: Parser Command
+parseListLang = ListLang <$> parseTopOption
+
+parseListOwners :: Parser Command
+parseListOwners = ListOwners <$> parseTopOption
 
 parseCommand :: Parser Command
 parseCommand =
   subparser
     ( command "config" (parseSetConfig `withInfo` "Config")
         <> command "update" (pure UpdateProjects `withInfo` "Update your project list from upstream")
-        <> command "list" (parseSearch `withInfo` "Search project")
-        <> command "owners" (pure ListOwners `withInfo` "List top owners")
-        <> command "tags" (pure ListTags `withInfo` "List top tags")
-        <> command "languages" (pure ListLang `withInfo` "List top languages")
+        <> command "list" (parseListProjects `withInfo` "List projects")
+        <> command "owners" (parseListOwners `withInfo` "List top owners")
+        <> command "tags" (parseListTags `withInfo` "List top tags")
+        <> command "languages" (parseListLang `withInfo` "List top languages")
     )
+
+execCommand :: Command -> IO ()
+execCommand (SetConfig user) =
+  loadConfig >>= \case
+    Left err -> writeConfig $ Config user Nothing
+    Right config -> writeConfig $ config {cfgUser = user}
+execCommand UpdateProjects = updateLocalProjects
+execCommand (ListTags n) =
+  loadLocalProjects >>= \case
+    Left err -> putStrLn err
+    Right projects -> showTopTags n projects
+execCommand (ListOwners n) =
+  loadLocalProjects >>= \case
+    Left err -> putStrLn err
+    Right projects -> showTopOwners n projects
+execCommand (ListLang n) =
+  loadLocalProjects >>= \case
+    Left err -> putStrLn err
+    Right projects -> showTopLanguages n projects
+execCommand (ListProjects pf n) =
+  loadLocalProjects >>= \case
+    Left err -> putStrLn err
+    Right projects -> listProjects pf n projects

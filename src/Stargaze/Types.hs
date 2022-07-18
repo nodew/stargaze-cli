@@ -102,6 +102,7 @@ instance ToJSON Author where
 data ProjectFilter = ProjectFilter
   { pfPattern :: Maybe String,
     pfLanguage :: Maybe String,
-    pfTag :: Maybe String
+    pfTag :: Maybe String,
+    pfOwner :: Maybe String
   }
   deriving (Eq, Show)
