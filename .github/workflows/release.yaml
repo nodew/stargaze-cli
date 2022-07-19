@@ -62,5 +62,4 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ github.ref }}
         file: output/${{ matrix.artifact_name }}
-        file_glob: true
         asset_name: ${{ matrix.asset_name }}
