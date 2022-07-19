@@ -64,4 +64,3 @@ jobs:
         file: output/${{ matrix.artifact_name }}
         file_glob: true
         asset_name: ${{ matrix.asset_name }}
-        release_name: ${{ tag }}
