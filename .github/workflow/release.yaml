@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - v*
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        stack: ["2.7.5"]
+        ghc:
+          - "9.0.2"
+        include:
+          - os: ubuntu-latest
+            artifact_name: stargaze
+            asset_name: stargaze-linux-amd64
+          - os: windows-latest
+            artifact_name: stargaze.exe
+            asset_name: stargaze-windows-amd64
+          - os: macos-latest
+            artifact_name: stargaze
+            asset_name: stargaze-macos-amd64
+
+    name: ${{ matrix.os }} / ghc ${{ matrix.ghc }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: haskell/actions/setup@v1.2
+      name: Setup Haskell Stack
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        stack-version: ${{ matrix.stack }}
+
+    - uses: actions/cache@v2
+      name: Cache ~/.stack
+      with:
+        path: ~/.stack
+        key: ${{ runner.os }}-${{ matrix.ghc }}-stack
+
+    - name: Install dependencies
+      run: |
+        stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks --only-dependencies
+    - name: Build
+      run: |
+        stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks
+    - name: Test
+      run: |
+        stack test --system-ghc
+    - name: Copy bins
+      run: |
+        stack install --local-bin-path ./output
+
+    - name: Upload release assets
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref }}
+        file: output/${{ matrix.artifact_name }}
+        file_glob: true
+        asset_name: ${{ matrix.asset_name }}
+        release_name: ${{ tag }}
