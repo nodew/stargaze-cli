@@ -20,7 +20,7 @@ jobs:
             asset_name: stargaze-linux-amd64
           - os: windows-latest
             artifact_name: stargaze.exe
-            asset_name: stargaze-windows-amd64
+            asset_name: stargaze-windows-amd64.exe
           - os: macos-latest
             artifact_name: stargaze
             asset_name: stargaze-macos-amd64
