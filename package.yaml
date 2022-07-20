@@ -12,6 +12,11 @@ extra-source-files:
 
 description:         Please see the README on GitHub at <https://github.com/nodew/stargaze-cli#readme>
 
+default-extensions:
+- OverloadedStrings
+- LambdaCase
+- DeriveGeneric
+
 dependencies:
 - base >= 4.7 && < 5
 - aeson

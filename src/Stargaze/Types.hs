@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Stargaze.Types where
 
 import Control.Monad (MonadPlus (mzero))
