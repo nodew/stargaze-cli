@@ -2,6 +2,3 @@ resolver: lts-19.15
 
 packages:
 - .
-
-ghc-options:
-  "$everything": -split-sections
